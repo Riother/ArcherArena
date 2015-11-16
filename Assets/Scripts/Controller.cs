@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.Networking;
 
 public class Controller : MonoBehaviour {
     private static float BaseMovementSpeed = 5;
@@ -12,16 +12,18 @@ public class Controller : MonoBehaviour {
     { 
         bonusMovementSpeed = 0;
         totalMovementSpeed = BaseMovementSpeed + bonusMovementSpeed;
-        useWASD = true;
+        useWASD = false;
 	}
 	
 	void Update () {
-        if(useWASD)
-            WASDMovement();
-        else
-            RightClickMovement();
+        if (gameObject.GetComponent<NetworkIdentity>().isLocalPlayer) {
+            if (useWASD)
+                WASDMovement();
+            else
+                RightClickMovement();
+            GetComponent<Rigidbody>().velocity = currentVelocity;
+        }
 
-        GetComponent<Rigidbody>().velocity = currentVelocity;
 	}
 
     private void WASDMovement()
@@ -50,9 +52,18 @@ public class Controller : MonoBehaviour {
     {
         if(Input.GetMouseButtonDown(1))
         {
-            Vector3 mousePosition = Input.mousePosition;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit = new RaycastHit();
+
+            Vector3 hitLocation = new Vector3();
+            if (Physics.Raycast(ray, out hit, 300))
+            {
+                hitLocation = hit.point;
+            }
+            hitLocation.y = 0.5f;
+
             currentVelocity = Vector3.zero;
-            currentVelocity = (mousePosition - gameObject.transform.position).normalized * totalMovementSpeed;
+            currentVelocity = (hitLocation - gameObject.transform.position).normalized * totalMovementSpeed;
         }
     }
 }
